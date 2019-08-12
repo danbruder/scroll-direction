@@ -1,5 +1,5 @@
 [package]
-name = "scroll"
+name = "scroll-direction"
 version = "0.1.0"
 authors = ["Dan Bruder <ddbruder@gmail.com>"]
 edition = "2018"
