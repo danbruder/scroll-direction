@@ -1,0 +1,9 @@
+[package]
+name = "scroll"
+version = "0.1.0"
+authors = ["Dan Bruder <ddbruder@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+quicli = "0.4.0"
+structopt = "0.2.18"
