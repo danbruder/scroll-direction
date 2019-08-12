@@ -98,13 +98,9 @@ fn set(direction: Direction) -> Result<(), AppError> {
         return Err(AppError("Could not set scroll direction".to_owned()));
     }
 
-    let output = Command::new("pkill").arg("loginwindow").output()?;
-
-    if output.status.code() != Some(0) {
-        return Err(AppError("Could not save scroll direction".to_owned()));
-    }
-
-    Ok(())
+    Err(AppError(
+        "Could not save scroll direction because of reasons".to_owned(),
+    ))
 }
 
 fn main() -> CliResult {
