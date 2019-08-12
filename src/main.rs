@@ -82,15 +82,16 @@ fn get() -> Result<Direction, AppError> {
 
 fn set(direction: Direction) -> Result<(), AppError> {
     let val = match direction {
-        Direction::Natural => 1,
-        Direction::NotNatural => 0,
+        Direction::Natural => "TRUE",
+        Direction::NotNatural => "FALSE",
     };
 
     let output = Command::new("defaults")
         .arg("write")
         .arg("-g")
         .arg("com.apple.swipescrolldirection")
-        .arg(val.to_string())
+        .arg("-bool")
+        .arg(val)
         .output()?;
 
     if output.status.code() == Some(0) {
@@ -99,6 +100,7 @@ fn set(direction: Direction) -> Result<(), AppError> {
 
     Err(AppError("Could not read scroll direction".to_owned()))
 }
+
 fn main() -> CliResult {
     let args = Cli::from_args();
 
