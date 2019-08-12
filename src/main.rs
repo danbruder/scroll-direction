@@ -1,28 +1,118 @@
+use quicli::prelude::*;
 use std::process::Command;
+use std::str::FromStr;
+use std::string::ToString;
+use structopt::StructOpt;
 
-fn main() {
-    println!("Checking scroll direction");
-
-    let direction = get();
-
-    println!("Set to {}", direction);
+// Add cool slogan for your app here, e.g.:
+/// Get and set the mouse scroll direction
+#[derive(Debug, StructOpt)]
+#[structopt(name = "scroll", about = "get and set the scroll direction")]
+enum Cli {
+    #[structopt(name = "get")]
+    Get {},
+    #[structopt(name = "set")]
+    Set { value: Direction },
 }
 
-fn get() -> bool {
+#[derive(Debug)]
+enum Direction {
+    Natural,
+    NotNatural,
+}
+
+impl std::fmt::Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Direction::Natural => write!(f, "natural"),
+            Direction::NotNatural => write!(f, "not natural"),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct AppError(String);
+
+impl FromStr for Direction {
+    type Err = AppError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "0" => Ok(Direction::NotNatural),
+            "1" => Ok(Direction::Natural),
+            _ => Err(AppError("Invalid direction".to_owned())),
+        }
+    }
+}
+
+impl From<std::io::Error> for AppError {
+    fn from(err: std::io::Error) -> Self {
+        AppError(format!("{:?}", err).to_owned())
+    }
+}
+
+impl std::fmt::Display for AppError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.to_owned())
+    }
+}
+impl std::error::Error for AppError {
+    fn description(&self) -> &str {
+        &self.0
+    }
+}
+
+fn get() -> Result<Direction, AppError> {
     let output = Command::new("defaults")
         .arg("read")
         .arg("-g")
         .arg("com.apple.swipescrolldirection")
-        .output()
-        .expect("Could not read scroll direction 1");
+        .output()?;
     if output.status.code() == Some(0) {
         let value = String::from_utf8_lossy(&output.stdout);
         let value = value.trim();
         if value == "0".to_owned() {
-            return false;
+            return Ok(Direction::NotNatural);
         } else if value == "1".to_owned() {
-            return true;
+            return Ok(Direction::Natural);
         }
     }
-    panic!("Could not read scroll direction");
+
+    Err(AppError("Could not read scroll direction".to_owned()))
+}
+
+fn set(direction: Direction) -> Result<(), AppError> {
+    let val = match direction {
+        Direction::Natural => 1,
+        Direction::NotNatural => 0,
+    };
+
+    let output = Command::new("defaults")
+        .arg("write")
+        .arg("-g")
+        .arg("com.apple.swipescrolldirection")
+        .arg(val.to_string())
+        .output()?;
+
+    if output.status.code() == Some(0) {
+        return Ok(());
+    }
+
+    Err(AppError("Could not read scroll direction".to_owned()))
+}
+fn main() -> CliResult {
+    let args = Cli::from_args();
+
+    match args {
+        Cli::Get {} => {
+            let direction = get()?;
+
+            println!("Scroll direction is currently {}", direction);
+        }
+        Cli::Set { value } => {
+            println!("Set to {}", value);
+            set(value)?;
+        }
+    }
+
+    Ok(())
 }
